@@ -3,8 +3,11 @@ package com.cst8911.auth.util;
 
 
 
+import com.cst8911.auth.model.User;
+import com.nimbusds.jose.Algorithm;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.SignatureAlgorithm;
 import io.jsonwebtoken.io.Decoders;
 import io.jsonwebtoken.security.Keys;
 import org.springframework.beans.factory.annotation.Value;
@@ -62,25 +65,27 @@ public class JwtTokenUtil {
         return (username.equals(userDetails.getUsername()) && !isTokenExpired(token));
     }
 
-    public String generateToken(String username) {
+    public String generateToken(UserDetails user) {
         Map<String, Object> claims = new HashMap<>();
-        return createToken(claims, username);
+        return createToken(claims, user);
     }
 
     /**
      * Create Token
      * @param claims
-     * @param username
+     * @param user
      * @return User access token
      */
-    private String createToken(Map<String, Object> claims, String username) {
+    private String createToken(Map<String, Object> claims, UserDetails user) {
+
+        claims.put("role", user.getAuthorities());
 
         return Jwts.builder()
                 .claims(claims)
-                .subject(username)
+                .subject(user.getUsername())
                 .issuedAt(new Date(System.currentTimeMillis()))
                 .expiration(new Date(System.currentTimeMillis() + 60 * 60 * 1000))
-                .signWith(getSignKey())
+                .signWith(getSignKey(), Jwts.SIG.HS256)
                 .compact();
     }
 
